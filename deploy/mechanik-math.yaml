@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mechanik-math
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mechanik-math
+  template:
+    metadata:
+      labels:
+        app: mechanik-math
+    spec:
+      containers:
+        - name: bokeh
+          image: ghcr.io/adnabasic/mechanics-apps:latest
+          imagePullPolicy: Always
+          env:
+            - name: APPLIST
+              value: appnames_math.conf
+            - name: PUBLIC_HOST
+              value: mechanik-math-project-apps.apps.datalab.unicloud.at
+          ports:
+            - containerPort: 5006
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mechanik-math
+spec:
+  selector:
+    app: mechanik-math
+  ports:
+    - port: 5006
+      targetPort: 5006
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: mechanik-math
+  annotations:
+    haproxy.router.openshift.io/timeout: 1h
+spec:
+  host: mechanik-math-project-apps.apps.datalab.unicloud.at
+  to:
+    kind: Service
+    name: mechanik-math
+  port:
+    targetPort: 5006
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect

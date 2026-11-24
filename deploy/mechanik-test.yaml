@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mechanik-test
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: mechanik-test
+  template:
+    metadata:
+      labels:
+        app: mechanik-test
+    spec:
+      containers:
+        - name: bokeh
+          image: ghcr.io/adnabasic/mechanics-apps:latest
+          imagePullPolicy: Always
+          env:
+            - name: APPLIST
+              value: appnames_testing.conf
+            - name: PUBLIC_HOST
+              value: mechanik-test-project-apps.apps.datalab.unicloud.at
+          ports:
+            - containerPort: 5006
+          resources:
+            requests:
+              cpu: 200m
+              memory: 512Mi
+            limits:
+              memory: 2Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: mechanik-test
+spec:
+  selector:
+    app: mechanik-test
+  ports:
+    - port: 5006
+      targetPort: 5006
+---
+apiVersion: route.openshift.io/v1
+kind: Route
+metadata:
+  name: mechanik-test
+  annotations:
+    haproxy.router.openshift.io/timeout: 1h
+spec:
+  host: mechanik-test-project-apps.apps.datalab.unicloud.at
+  to:
+    kind: Service
+    name: mechanik-test
+  port:
+    targetPort: 5006
+  tls:
+    termination: edge
+    insecureEdgeTerminationPolicy: Redirect
