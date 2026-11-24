@@ -1,10 +1,10 @@
 FROM --platform=linux/amd64 python:3.7-slim-bullseye
 
-# Node.js 12 - Bokeh braucht es, um die LaTeX-Erweiterungen (shared/*.ts) zu uebersetzen
-RUN apt-get update && apt-get install -y --no-install-recommends curl xz-utils ca-certificates \
- && curl -fsSL https://nodejs.org/dist/v12.22.12/node-v12.22.12-linux-x64.tar.xz \
-    | tar -xJ -C /usr/local --strip-components=1 \
- && rm -rf /var/lib/apt/lists/*
+# Node.js 12 - Bokeh braucht es, um die LaTeX-Erweiterungen (shared/*.ts) zu uebersetzen.
+# Download mit Python statt apt (die alten Debian-Paketquellen machen Probleme).
+RUN python -c "import urllib.request,tarfile,io; d=urllib.request.urlopen('https://nodejs.org/dist/v12.22.12/node-v12.22.12-linux-x64.tar.xz').read(); tarfile.open(fileobj=io.BytesIO(d),mode='r:xz').extractall('/opt')" \
+ && ln -s /opt/node-v12.22.12-linux-x64/bin/node /usr/local/bin/node \
+ && node --version
 
 COPY requirements.txt /tmp/requirements.txt
 RUN pip install --no-cache-dir -r /tmp/requirements.txt
